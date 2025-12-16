@@ -5,7 +5,6 @@ import time
 from functools import partial
 import os
 import pickle
-import io
 from typing import Tuple
 
 try:
@@ -38,7 +37,6 @@ import chex
 import humanhash
 import jax
 import jax.numpy as jnp
-import jax.profiler
 import numpy as np
 import optax
 import pgx
