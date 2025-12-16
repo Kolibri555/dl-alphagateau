@@ -68,6 +68,10 @@ config = {
     'gardner': False,
     'inner_size': 128,
     'learning_rate': 0.001,
+    'warmup_steps': 100,
+    'lr_decay_steps': 10000,
+    'max_grad_norm': 1.0,
+    'weight_decay': 1e-4,
     'max_num_steps': 256,
     'mix_edge_node': True,
     'n_gnn_layers': 5,
@@ -200,7 +204,17 @@ else:
 init_fn = jax.jit(jax.vmap(env.init))
 step_fn = jax.jit(jax.vmap(env.step))
 
-optimizer = optax.adam(learning_rate=config['learning_rate'])
+schedule = optax.warmup_cosine_decay_schedule(
+    init_value=0.0,
+    peak_value=config['learning_rate'],
+    warmup_steps=config['warmup_steps'],
+    decay_steps=config['lr_decay_steps'],
+    end_value=config['learning_rate'] * 0.01
+)
+optimizer = optax.chain(
+    optax.clip_by_global_norm(config['max_grad_norm']),
+    optax.adamw(learning_rate=schedule, weight_decay=config['weight_decay'])
+)
 
 
 @partial(jax.pmap, static_broadcasted_argnums=[1, 3, 4, 5, 6])
